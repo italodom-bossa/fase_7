@@ -1,0 +1,77 @@
+[
+  {
+    "cultura": "Caf\u00e9",
+    "area": 31415.926535897932,
+    "insumos": {
+      "Nitrog\u00eanio (kg/ha)": 314.1592653589793,
+      "F\u00f3sforo (kg/ha)": 157.07963267948966,
+      "Pot\u00e1ssio (kg/ha)": 188.49555921538757,
+      "Micronutrientes (Boro, Zinco) (kg/ha)": 15.707963267948966,
+      "Calc\u00e1rio (t/ha)": 9.42477796076938,
+      "Gesso Agr\u00edcola (t/ha)": 4.71238898038469,
+      "Inseticidas (mL/ha)": 4712.38898038469,
+      "Fungicidas (mL/ha)": 6283.185307179586,
+      "Herbicidas (L/ha)": 6.283185307179586
+    }
+  },
+  {
+    "cultura": "Soja",
+    "area": 80000.0,
+    "insumos": {
+      "F\u00f3sforo (kg/ha)": 320.0,
+      "Pot\u00e1ssio (kg/ha)": 400.0,
+      "Micronutrientes e Enxofre (S) (kg/ha)": 80.0,
+      "Bradyrhizobium (com Mo e Co) (mL/ha)": 4000.0,
+      "Calc\u00e1rio (t/ha)": 20.0,
+      "Gesso Agr\u00edcola (t/ha)": 8.0,
+      "Fungicidas (mL/ha)": 20000.0,
+      "Inseticidas (mL/ha)": 14400.0,
+      "Aplica\u00e7\u00f5es Foliares de Micronutrientes (mL/ha)": 2400.0
+    }
+  },
+  {
+    "cultura": "Caf\u00e9",
+    "area": 282743.3388230814,
+    "insumos": {
+      "Nitrog\u00eanio (kg/ha)": 2827.433388230814,
+      "F\u00f3sforo (kg/ha)": 1413.716694115407,
+      "Pot\u00e1ssio (kg/ha)": 1696.4600329384884,
+      "Micronutrientes (Boro, Zinco) (kg/ha)": 141.37166941154072,
+      "Calc\u00e1rio (t/ha)": 84.82300164692442,
+      "Gesso Agr\u00edcola (t/ha)": 42.41150082346221,
+      "Inseticidas (mL/ha)": 42411.500823462215,
+      "Fungicidas (mL/ha)": 56548.667764616286,
+      "Herbicidas (L/ha)": 56.54866776461628
+    }
+  },
+  {
+    "cultura": "Soja",
+    "area": 150000.0,
+    "insumos": {
+      "F\u00f3sforo (kg/ha)": 600.0,
+      "Pot\u00e1ssio (kg/ha)": 750.0,
+      "Micronutrientes e Enxofre (S) (kg/ha)": 150.0,
+      "Bradyrhizobium (com Mo e Co) (mL/ha)": 7500.0,
+      "Calc\u00e1rio (t/ha)": 37.5,
+      "Gesso Agr\u00edcola (t/ha)": 15.0,
+      "Fungicidas (mL/ha)": 37500.0,
+      "Inseticidas (mL/ha)": 27000.0,
+      "Aplica\u00e7\u00f5es Foliares de Micronutrientes (mL/ha)": 4500.0
+    }
+  },
+  {
+    "cultura": "Caf\u00e9",
+    "area": 70685.83470577035,
+    "insumos": {
+      "Nitrog\u00eanio (kg/ha)": 706.8583470577036,
+      "F\u00f3sforo (kg/ha)": 353.4291735288518,
+      "Pot\u00e1ssio (kg/ha)": 424.1150082346221,
+      "Micronutrientes (Boro, Zinco) (kg/ha)": 35.34291735288518,
+      "Calc\u00e1rio (t/ha)": 21.205750411731106,
+      "Gesso Agr\u00edcola (t/ha)": 10.602875205865553,
+      "Inseticidas (mL/ha)": 10602.875205865554,
+      "Fungicidas (mL/ha)": 14137.166941154072,
+      "Herbicidas (L/ha)": 14.13716694115407
+    }
+  }
+]

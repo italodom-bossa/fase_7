@@ -1,0 +1,573 @@
+"""
+Página Fase 6 - Vision Computacional com YOLO
+FarmTech Solutions - Dashboard Integrado
+"""
+
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
+import sys
+from pathlib import Path
+import cv2
+import numpy as np
+from PIL import Image
+
+# Adicionar diretório pai ao path
+sys.path.append(str(Path(__file__).parent.parent))
+
+from servicos.database import DatabaseManager, DB_FASE6
+from servicos.fase6_yolo import (
+    DetectorYOLO,
+    GeradorImagensTeste,
+    RelatorioVisao,
+    gerar_dados_exemplo_yolo
+)
+
+# Configuração da página
+st.set_page_config(
+    page_title="Fase 6 - Vision Computacional YOLO",
+    page_icon="🔍",
+    layout="wide"
+)
+
+# Importar e aplicar CSS global
+from styles import apply_global_css
+apply_global_css()
+
+# CSS customizado
+st.markdown("""
+<style>
+    /* Fundo branco para toda a página */
+    .main {
+        background-color: #999 !important;
+    }
+    .stApp {
+        background-color: #999 !important;
+    }
+    [data-testid="stAppViewContainer"] {
+        # background-color: #ffffff !important;
+    }
+    .detection-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+    }
+    .health-good {
+        background-color: #E8F5E9;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #4CAF50;
+        margin: 10px 0;
+    }
+    .health-warning {
+        background-color: #FFF3E0;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #FF9800;
+        margin: 10px 0;
+    }
+    .health-critical {
+        background-color: #FFEBEE;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #F44336;
+        margin: 10px 0;
+    }
+    .detection-item {
+        background-color: #E3F2FD;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 5px 0;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Header
+st.title("🔍 Fase 6 - Vision Computacional com YOLO")
+st.markdown("### Sistema de Detecção de Gatos 🐱 e Cachorros 🐶 com Deep Learning")
+
+st.markdown("---")
+
+# Descrição
+with st.expander("ℹ️ Sobre Vision Computacional com YOLO"):
+    st.markdown("""
+    **YOLO (You Only Look Once)** é um modelo de detecção de objetos em tempo real.
+
+    **Modelo Atual:**
+    - 🎯 YOLOv8 Nano treinado por 100 épocas (labels corrigidas)
+    - 📊 mAP50: 35.6% | Precision: 75.0% | Recall: 66.3%
+    - 🔬 Dataset: 82 imagens (cat/dog)
+    - 📍 Localizado em: `/fases/fase_6_cap_1/`
+
+    **Classes Detectadas:**
+    - 🐱 Gato (Cat)
+    - 🐶 Cachorro (Dog)
+
+    **Como Usar:**
+    1. 📸 Faça upload de uma **foto de gato ou cachorro** (JPG, PNG)
+    2. 🎲 Ou gere uma imagem de teste
+    3. 🎚️ Ajuste a confiança mínima (recomendado: 0.5)
+    4. 🔍 Clique em "Analisar Imagem"
+
+    **Características:**
+    - ✅ Detecção em tempo real com YOLOv8
+    - ✅ Modelo customizado treinado (100 épocas (labels corrigidas))
+    - ✅ Visualização de bounding boxes
+    - ✅ Análise de confiança das predições
+    - ✅ Estatísticas detalhadas de detecções
+
+    **Nota:** Este é um modelo de demonstração treinado com dataset de pets.
+    A mesma tecnologia pode ser aplicada para detecção de pragas, doenças e
+    outros objetos agrícolas.
+    """)
+
+st.markdown("---")
+
+# Inicializar session state
+if 'dados_yolo' not in st.session_state:
+    st.session_state.dados_yolo = gerar_dados_exemplo_yolo()
+    st.session_state.imagens_analisadas = []
+
+
+# Função para salvar detecção no banco de dados
+def salvar_deteccao_db(resultado):
+    """Salva detecção no banco de dados"""
+    try:
+        db = DatabaseManager(DB_FASE6)
+
+        # Inserir detecção principal
+        cursor = db.execute("""
+            INSERT INTO deteccoes (timestamp, total_objetos, confianca_media, modo_deteccao)
+            VALUES (?, ?, ?, ?)
+        """, (resultado['timestamp'], resultado['total_objetos'], resultado['confianca_media'], resultado.get('modo', 'Desconhecido')))
+
+        deteccao_id = cursor.lastrowid
+
+        # Inserir objetos detectados
+        for det in resultado['deteccoes']:
+            db.execute("""
+                INSERT INTO objetos_detectados
+                (deteccao_id, classe, classe_original, classe_id, confianca,
+                 bbox_x, bbox_y, bbox_width, bbox_height, area_pixels)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                deteccao_id,
+                det['classe'],
+                det.get('classe_original', det['classe']),
+                det.get('classe_id', 0),
+                det['confianca'],
+                det['bbox'].get('x', 0),
+                det['bbox'].get('y', 0),
+                det['bbox'].get('width', 0),
+                det['bbox'].get('height', 0),
+                det.get('area_pixels', 0)
+            ))
+
+        db.close()
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar no banco: {e}")
+        return False
+
+
+# Tabs
+tab1, tab2, tab3, tab4 = st.tabs(["📷 Análise de Imagem", "📊 Histórico", "🎯 Detecções", "📈 Estatísticas"])
+
+# TAB 1: ANÁLISE DE IMAGEM
+with tab1:
+    st.markdown("## 📷 Análise de Imagem com YOLO")
+
+    col1, col2 = st.columns([2, 1])
+
+    with col1:
+        st.markdown("### Envio de Imagem")
+
+        arquivo_upload = st.file_uploader(
+            "Selecione uma imagem de gato ou cachorro",
+            type=["jpg", "jpeg", "png"],
+            help="Faça upload de uma foto de gato ou cachorro para detecção"
+        )
+
+        if arquivo_upload:
+            imagem_pil = Image.open(arquivo_upload)
+            imagem_numpy = cv2.cvtColor(np.array(imagem_pil), cv2.COLOR_RGB2BGR)
+            st.image(imagem_pil, caption="Imagem Enviada", use_container_width=True)
+            st.session_state.imagem_temp = imagem_numpy
+
+    with col2:
+        st.markdown("### Parâmetros de Detecção")
+
+        confianca_minima = st.slider(
+            "Confiança Mínima:",
+            min_value=0.3,
+            max_value=0.95,
+            value=0.5,
+            step=0.05,
+            help="Objetos com confiança menor serão ignorados"
+        )
+
+        st.markdown("---")
+
+        st.markdown("### ✨ Modelos Disponíveis")
+        st.write("- YOLOv8 Nano")
+        st.write("- YOLOv8 Small")
+        st.write("- YOLOv8 Medium")
+
+    st.markdown("---")
+
+    # Botão para analisar
+    if st.button("🔍 Analisar Imagem", type="primary", use_container_width=True):
+        if 'imagem_temp' in st.session_state:
+            detector = st.session_state.dados_yolo["detector"]
+            imagem = st.session_state.imagem_temp
+
+            # Detectar objetos
+            resultado = detector.detectar_objetos(imagem, confianca_minima)
+
+            # Analisar saúde
+            saude = detector.analisar_saude_plantacao(resultado['deteccoes'])
+
+            # Armazenar análise
+            st.session_state.imagens_analisadas.append({
+                "timestamp": resultado['timestamp'],
+                "total_objetos": resultado['total_objetos'],
+                "confianca_media": resultado['confianca_media'],
+                "saude": saude
+            })
+
+            # Exibir resultados
+            st.markdown("### 📊 Resultados da Detecção")
+
+            # Mostrar modo de detecção
+            modo = resultado.get('modo', 'Desconhecido')
+            if modo == "YOLO Real":
+                st.success(f"✅ **Modo:** {modo} - Usando modelo treinado (100 épocas (labels corrigidas))")
+            else:
+                st.warning(f"⚠️ **Modo:** {modo} - Modelo não carregado, usando simulação")
+
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                st.metric(
+                    "Objetos Detectados",
+                    resultado['total_objetos']
+                )
+
+            with col2:
+                st.metric(
+                    "Confiança Média",
+                    f"{resultado['confianca_media']:.1%}"
+                )
+
+            with col3:
+                st.metric(
+                    "Score de Confiança",
+                    f"{saude['score_saude']:.1f}/100"
+                )
+
+            with col4:
+                cor_status = "🟢" if saude['score_saude'] >= 80 else "🟡" if saude['score_saude'] >= 50 else "🔴"
+                st.metric(
+                    "Status",
+                    cor_status,
+                    saude['status']
+                )
+
+            st.markdown("---")
+
+            # Detecções detalhadas
+            if resultado['deteccoes']:
+                st.markdown("### 🎯 Detecções Encontradas")
+
+                for i, det in enumerate(resultado['deteccoes'], 1):
+                    col1, col2, col3 = st.columns([2, 1, 1])
+
+                    with col1:
+                        st.write(f"**{i}. {det['classe']}**")
+
+                    with col2:
+                        st.write(f"Confiança: {det['confianca']:.1%}")
+
+                    with col3:
+                        st.write(f"Área: {det['bbox']['width']}×{det['bbox']['height']}")
+
+            st.markdown("---")
+
+            # Recomendações
+            st.markdown("### 💡 Recomendações")
+            for rec in saude['recomendacoes']:
+                st.write(rec)
+        else:
+            st.error("❌ Por favor, primeiro gere ou envie uma imagem")
+
+# TAB 2: HISTÓRICO
+with tab2:
+    st.markdown("## 📊 Histórico de Análises")
+
+    detector = st.session_state.dados_yolo["detector"]
+    historico = detector.obter_historico()
+
+    if historico:
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric(
+                "Total de Análises",
+                len(historico)
+            )
+
+        with col2:
+            media_objetos = np.mean([h['total_objetos'] for h in historico])
+            st.metric(
+                "Média de Objetos",
+                f"{media_objetos:.1f}"
+            )
+
+        with col3:
+            media_confianca = np.mean([h['confianca_media'] for h in historico])
+            st.metric(
+                "Confiança Média",
+                f"{media_confianca:.1%}"
+            )
+
+        st.markdown("---")
+
+        # Tabela de histórico
+        df_historico = pd.DataFrame([
+            {
+                "Timestamp": h['timestamp'],
+                "Objetos": h['total_objetos'],
+                "Confiança": f"{h['confianca_media']:.1%}"
+            }
+            for h in historico
+        ])
+
+        st.dataframe(df_historico, use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+
+        # Gráficos
+        col1, col2 = st.columns(2)
+
+        with col1:
+            fig_objetos = go.Figure()
+            fig_objetos.add_trace(go.Scatter(
+                y=[h['total_objetos'] for h in historico],
+                mode='lines+markers',
+                name='Objetos Detectados',
+                line=dict(color='#2196F3'),
+                fill='tozeroy'
+            ))
+            fig_objetos.update_layout(
+                title="Objetos Detectados por Análise",
+                xaxis_title="Análise",
+                yaxis_title="Quantidade",
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig_objetos, use_container_width=True)
+
+        with col2:
+            fig_confianca = go.Figure()
+            fig_confianca.add_trace(go.Scatter(
+                y=[h['confianca_media'] for h in historico],
+                mode='lines+markers',
+                name='Confiança Média',
+                line=dict(color='#4CAF50'),
+                fill='tozeroy'
+            ))
+            fig_confianca.update_layout(
+                title="Confiança Média das Detecções",
+                xaxis_title="Análise",
+                yaxis_title="Confiança (%)",
+                yaxis=dict(range=[0, 1]),
+                hovermode='x unified'
+            )
+            st.plotly_chart(fig_confianca, use_container_width=True)
+    else:
+        st.info("📭 Nenhuma análise realizada ainda. Use a aba 'Análise de Imagem' para começar.")
+
+# TAB 3: DETECÇÕES
+with tab3:
+    st.markdown("## 🎯 Resumo de Detecções")
+
+    detector = st.session_state.dados_yolo["detector"]
+    historico = detector.obter_historico()
+
+    if historico:
+        # Contar todas as detecções
+        todas_deteccoes = []
+        for h in historico:
+            todas_deteccoes.extend(h['deteccoes'])
+
+        saude_geral = detector.analisar_saude_plantacao(todas_deteccoes)
+
+        # Exibir score de confiança
+        col1, col2 = st.columns([2, 1])
+
+        with col1:
+            if saude_geral['score_saude'] >= 80:
+                st.markdown(f"""
+                <div class="health-good">
+                    <h3>✅ {saude_geral['status']}</h3>
+                    <h2>{saude_geral['score_saude']:.1f}/100</h2>
+                    <p>Detecções com excelente confiança!</p>
+                </div>
+                """, unsafe_allow_html=True)
+            elif saude_geral['score_saude'] >= 50:
+                st.markdown(f"""
+                <div class="health-warning">
+                    <h3>⚠️ {saude_geral['status']}</h3>
+                    <h2>{saude_geral['score_saude']:.1f}/100</h2>
+                    <p>Confiança moderada nas detecções.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="health-critical">
+                    <h3>🚨 {saude_geral['status']}</h3>
+                    <h2>{saude_geral['score_saude']:.1f}/100</h2>
+                    <p>Baixa confiança - tente outras imagens!</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with col2:
+            st.markdown("### 📋 Total de Detecções")
+            st.write(f"🐱 Gatos: {saude_geral.get('gatos_detectados', 0)}")
+            st.write(f"🐶 Cachorros: {saude_geral.get('cachorros_detectados', 0)}")
+            st.write(f"📊 Total: {saude_geral['total_deteccoes']}")
+
+        st.markdown("---")
+
+        # Recomendações
+        st.markdown("### 💡 Análise")
+        for rec in saude_geral['recomendacoes']:
+            st.write(f"• {rec}")
+
+        st.markdown("---")
+
+        # Distribuição de detecções
+        cats = saude_geral.get('gatos_detectados', 0)
+        dogs = saude_geral.get('cachorros_detectados', 0)
+
+        if cats > 0 or dogs > 0:
+            deteccoes_data = {
+                "Gatos 🐱": cats,
+                "Cachorros 🐶": dogs
+            }
+
+            fig_deteccoes = px.pie(
+                values=list(deteccoes_data.values()),
+                names=list(deteccoes_data.keys()),
+                title="Distribuição de Detecções por Classe",
+                color_discrete_sequence=["#FF6B6B", "#4ECDC4"]
+            )
+            st.plotly_chart(fig_deteccoes, use_container_width=True)
+
+    else:
+        st.info("📭 Nenhuma análise realizada ainda. Use a aba 'Análise de Imagem' para começar.")
+
+# TAB 4: ESTATÍSTICAS
+with tab4:
+    st.markdown("## 📈 Estatísticas Detalhadas")
+
+    detector = st.session_state.dados_yolo["detector"]
+    stats = detector.obter_estatisticas()
+
+    if stats['total_analises'] > 0:
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            st.metric(
+                "Total de Análises",
+                stats['total_analises']
+            )
+
+        with col2:
+            st.metric(
+                "Média de Objetos",
+                f"{stats['media_objetos_por_imagem']:.1f}"
+            )
+
+        with col3:
+            st.metric(
+                "Confiança Média",
+                f"{stats['confianca_media_geral']:.1%}"
+            )
+
+        with col4:
+            st.metric(
+                "Classes Detectadas",
+                len(detector.classes)
+            )
+
+        st.markdown("---")
+
+        # Classes mais detectadas
+        st.markdown("### 🏆 Classes Mais Detectadas")
+
+        historico = detector.obter_historico()
+        classes_count = {}
+        for h in historico:
+            for det in h['deteccoes']:
+                classe = det['classe']
+                classes_count[classe] = classes_count.get(classe, 0) + 1
+
+        if classes_count:
+            df_classes = pd.DataFrame([
+                {"Classe": k, "Detecções": v}
+                for k, v in sorted(classes_count.items(), key=lambda x: x[1], reverse=True)
+            ])
+
+            col1, col2 = st.columns([1, 1])
+
+            with col1:
+                st.dataframe(df_classes, use_container_width=True, hide_index=True)
+
+            with col2:
+                fig_classes = px.pie(
+                    df_classes,
+                    values="Detecções",
+                    names="Classe",
+                    title="Distribuição por Classe"
+                )
+                st.plotly_chart(fig_classes, use_container_width=True)
+
+        st.markdown("---")
+
+        # Relatório completo
+        st.markdown("### 📄 Relatório Completo")
+
+        relatorio = st.session_state.dados_yolo["relatorio"].gerar_relatorio_completo()
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("**Dados do Relatório:**")
+            st.write(f"- Data: {relatorio['data_geracao']}")
+            st.write(f"- Total de Análises: {relatorio['total_analises']}")
+            st.write(f"- Saúde Geral: {relatorio['saude_plantacao']}")
+            st.write(f"- Score: {relatorio['score_saude']:.1f}/100")
+
+        with col2:
+            st.markdown("**Problemas Identificados:**")
+            st.write(f"- Pragas: {relatorio['pragas_totais']}")
+            st.write(f"- Doenças: {relatorio['doencas_totais']}")
+            st.write(f"- Ervas Daninhas: {relatorio['ervas_totais']}")
+
+    else:
+        st.info("📭 Nenhuma análise realizada ainda. Use a aba 'Análise de Imagem' para começar.")
+
+st.markdown("---")
+
+# Rodapé
+st.markdown("""
+<div style="text-align: center; color: #666; font-size: 0.9rem;">
+    <p><strong>Fase 6</strong> - Vision Computacional com YOLO</p>
+    <p>🐱 Detecção de Gatos e Cachorros em Tempo Real 🐶</p>
+    <p>Modelo YOLOv8 Treinado (100 épocas (labels corrigidas)) | Dataset: 82 imagens</p>
+    <p>FarmTech Solutions | FIAP 2025</p>
+</div>
+""", unsafe_allow_html=True)
