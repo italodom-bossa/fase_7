@@ -57,19 +57,27 @@ class DetectorYOLO:
                 # Caminho padrão para o melhor modelo (100 épocas com labels corrigidas)
                 base_path = Path(__file__).parent.parent.parent
                 model_path = base_path / "fases" / "fase_6_cap_1" / "runs" / "detect" / "train_100epochs_corrigido" / "weights" / "best.pt"
+                print(f"🔍 Procurando modelo em: {model_path}")
 
             if Path(model_path).exists():
                 try:
+                    print(f"📦 Carregando modelo YOLO...")
                     self.model = YOLO(str(model_path))
-                    print(f"✅ Modelo YOLO carregado: {model_path}")
+                    print(f"✅ Modelo YOLO carregado com sucesso: {model_path}")
                 except Exception as e:
                     print(f"⚠️ Erro ao carregar modelo: {e}")
+                    print(f"⚠️ Tipo do erro: {type(e).__name__}")
+                    import traceback
+                    print(f"⚠️ Traceback: {traceback.format_exc()}")
                     print("⚠️ Usando modo simulação")
                     self.use_real_model = False
             else:
-                print(f"⚠️ Modelo não encontrado: {model_path}")
+                print(f"❌ Modelo não encontrado: {model_path}")
+                print(f"❌ Path absoluto: {Path(model_path).absolute()}")
                 print("⚠️ Usando modo simulação")
                 self.use_real_model = False
+        else:
+            print("⚠️ YOLO não está disponível (ultralytics não instalado)")
 
     def detectar_objetos(
         self,
