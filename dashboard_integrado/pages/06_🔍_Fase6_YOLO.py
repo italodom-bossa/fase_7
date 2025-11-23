@@ -9,9 +9,13 @@ import plotly.graph_objects as go
 import plotly.express as px
 import sys
 from pathlib import Path
-import cv2
 import numpy as np
 from PIL import Image
+
+try:
+    import cv2
+except ImportError:
+    cv2 = None
 
 # Adicionar diretório pai ao path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -88,6 +92,10 @@ st.markdown("""
 # Header
 st.title("🔍 Fase 6 - Vision Computacional com YOLO")
 st.markdown("### Sistema de Detecção de Gatos 🐱 e Cachorros 🐶 com Deep Learning")
+
+# Aviso se cv2 não estiver disponível
+if cv2 is None:
+    st.warning("⚠️ OpenCV não está instalado. Algumas funcionalidades podem estar limitadas. Instale com: `pip install opencv-python-headless`")
 
 st.markdown("---")
 
@@ -193,7 +201,14 @@ with tab1:
 
         if arquivo_upload:
             imagem_pil = Image.open(arquivo_upload)
-            imagem_numpy = cv2.cvtColor(np.array(imagem_pil), cv2.COLOR_RGB2BGR)
+
+            # Converter para numpy array
+            if cv2 is not None:
+                imagem_numpy = cv2.cvtColor(np.array(imagem_pil), cv2.COLOR_RGB2BGR)
+            else:
+                # Fallback sem cv2 - usa array RGB direto
+                imagem_numpy = np.array(imagem_pil)
+
             st.image(imagem_pil, caption="Imagem Enviada", use_container_width=True)
             st.session_state.imagem_temp = imagem_numpy
 
