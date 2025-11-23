@@ -1,0 +1,8 @@
+path: /Users/italodom/DESENVOLVIMENTO/ITALO/FIAP/fase_7/fases/fase_6_cap_1/yolo_dataset
+train: images/train
+val: images/val
+test: images/test
+nc: 2
+names:
+- cat
+- dog

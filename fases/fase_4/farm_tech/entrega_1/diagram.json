@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "author": "Italo Domingues",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 163.2, "left": 139.24, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 294.2,
+      "left": 278.4,
+      "attrs": { "color": "green", "xray": "1" }
+    },
+    { "type": "wokwi-photoresistor-sensor", "id": "ldr1", "top": 128, "left": -66.4, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -9.3,
+      "left": 129,
+      "attrs": { "humidity": "65.5", "temperature": "49.9" }
+    },
+    { "type": "wokwi-led", "id": "led1", "top": 92.4, "left": 349.4, "attrs": { "color": "red" } },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 196.8,
+      "left": 345.05,
+      "rotate": 90,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 284.6,
+      "left": 28.8,
+      "attrs": { "color": "yellow", "xray": "1" }
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -51.2,
+      "left": 360.8,
+      "attrs": { "pins": "i2c" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "btn1:1.l", "esp:4", "green", [ "h0" ] ],
+    [ "ldr1:VCC", "esp:3V3", "red", [ "h0" ] ],
+    [ "ldr1:GND", "esp:GND.2", "black", [ "h0" ] ],
+    [ "ldr1:AO", "esp:VP", "green", [ "h19.2", "v37.7" ] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "dht1:SDA", "esp:5", "green", [ "v28.8", "h115.3", "v144" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "h67.2", "v86.4" ] ],
+    [ "led1:A", "r1:1", "green", [ "v0" ] ],
+    [ "r1:2", "esp:18", "green", [ "v37.2", "h-134.4" ] ],
+    [ "led1:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "esp:GND.3", "btn1:2.r", "black", [ "h124.8", "v76.6" ] ],
+    [ "btn2:2.r", "esp:GND.1", "black", [ "h0" ] ],
+    [ "btn2:1.r", "esp:14", "green", [ "v0" ] ],
+    [ "lcd1:SDA", "esp:21", "green", [ "h0" ] ],
+    [ "lcd1:SCL", "esp:22", "green", [ "h0" ] ],
+    [ "esp:GND.2", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}

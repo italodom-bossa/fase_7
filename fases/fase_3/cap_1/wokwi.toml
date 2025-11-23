@@ -1,0 +1,9 @@
+[wokwi]
+version = 1
+firmware = "esp32/sketch.ino"
+elf = ""
+
+# Configurações para o serial monitor
+[[serial.monitor]]
+disable = false      # Habilita o monitor serial
+baudrate = 115200    # Taxa de transmissão

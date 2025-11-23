@@ -9,7 +9,7 @@
 
 **[🚀 Dashboard Online - Demonstração](https://fase-7-fiap-farm-tech.streamlit.app/)**
 
-**[🎬 Vídeo Demonstrativo - Fase 6 YOLO](SEU_LINK_AQUI)**
+**[🎬 Vídeo Demonstrativo](https://www.youtube.com/watch?v=r1FWopeoSJA)**
 
 ---
 
