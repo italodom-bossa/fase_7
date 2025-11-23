@@ -120,10 +120,12 @@ class DetectorYOLO:
         deteccoes = []
 
         try:
-            # Executar predição
+            # Executar predição com NMS para eliminar detecções duplicadas
             results = self.model.predict(
                 source=imagem,
                 conf=confianca_minima,
+                iou=0.5,  # IoU threshold para NMS - elimina boxes sobrepostas
+                max_det=10,  # Máximo de detecções por imagem
                 verbose=False
             )
 
