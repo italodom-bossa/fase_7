@@ -5,6 +5,14 @@
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-00FFFF.svg)](https://github.com/ultralytics/ultralytics)
 [![SQLite](https://img.shields.io/badge/SQLite-Database-003B57.svg)](https://www.sqlite.org/)
 
+## 🌐 Links Importantes
+
+**[🚀 Dashboard Online - Demonstração](https://fase-7-fiap-farm-tech.streamlit.app/)**
+
+**[🎬 Vídeo Demonstrativo - Fase 6 YOLO](SEU_LINK_AQUI)**
+
+---
+
 ## 📋 Sobre o Projeto
 
 Este repositório consolida **todas as 6 fases** do projeto FarmTech Solutions da FIAP, integrando soluções de tecnologia para o agronegócio em um **dashboard interativo único**.
@@ -62,18 +70,14 @@ fases/fase_6_cap_1/
 ├── labels/                    # 41 anotações YOLO (corrigidas)
 ├── yolo_dataset/              # Dataset convertido para YOLO
 ├── runs/detect/
-│   ├── train_30epochs/        # Modelo 1 (underfitting)
-│   ├── train_60epochs/        # Modelo 2 (labels incorretas)
-│   └── train_100epochs_corrigido/  # ⭐ Modelo final (labels corrigidas)
+│   ├── train_30epochs/        # Modelo 1 (30 épocas - labels incorretas)
+│   ├── train_60epochs/        # Modelo 2 (60 épocas - labels incorretas)
+│   └── train_100epochs_corrigido/  # ⭐ Modelo final (100 épocas - labels corrigidas)
 ├── ItaloDomingues_RM561787_pbl_fase6.ipynb  # Notebook principal
 ├── corrigir_labels.py         # Script de correção de labels
 ├── retreinar_modelo.py        # Script de retreinamento
 └── README.md                  # Documentação completa da Fase 6
 ```
-
-### 🎥 Demonstração
-
-[🎬 Vídeo Demonstrativo - Fase 6 YOLO (YouTube - não listado)](SEU_LINK_AQUI)
 
 **Documentação Completa**: Veja o [README da Fase 6](fases/fase_6_cap_1/README.md) para mais detalhes técnicos.
 

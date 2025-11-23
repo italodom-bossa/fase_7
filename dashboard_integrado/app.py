@@ -265,9 +265,9 @@ with col2:
             <p>Detecção de objetos com YOLOv8.</p>
             <ul>
                 <li>YOLOv8 nano</li>
-                <li>Comparação 30 vs 60 épocas</li>
+                <li>3 modelos: 30, 60 e 100 épocas</li>
                 <li>82 imagens (cats/dogs)</li>
-                <li>99% de acurácia final</li>
+                <li>Correção de labels e retreinamento</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
